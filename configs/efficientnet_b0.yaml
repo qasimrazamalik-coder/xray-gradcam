@@ -1,0 +1,46 @@
+# Real run: EfficientNet-B0 on the Kaggle chest X-ray data. Run `make data` first.
+seed: 42
+
+data:
+  source: kaggle              # kaggle | synthetic
+  root: data/chest_xray       # folder that contains train/ and test/
+  image_size: 224
+  val_fraction: 0.15          # carved out of the official train/ folder, stratified
+  batch_size: 32
+  num_workers: 2
+  # synthetic-only settings (ignored for source: kaggle)
+  synthetic:
+    root: data/synthetic_xray
+    train_per_class: {NORMAL: 40, PNEUMONIA: 80}
+    test_per_class: {NORMAL: 20, PNEUMONIA: 40}
+
+model:
+  arch: efficientnet_b0
+  pretrained: true            # ImageNet weights from torchvision
+  dropout: 0.3
+  gradcam_layer: features.8   # final 1x1 conv block, 7x7 map at 224 px
+
+train:
+  imbalance: pos_weight       # pos_weight | sampler | none
+  weight_decay: 0.0001
+  stage1:                     # head only, backbone frozen
+    epochs: 4
+    lr: 0.001
+    patience: 3
+  stage2:                     # whole network, lower learning rates
+    epochs: 12
+    lr_backbone: 0.0001
+    lr_head: 0.0003
+    patience: 4
+  min_delta: 0.0001           # minimum val AUROC gain that counts as improvement
+
+paths:
+  checkpoint: checkpoints/efficientnet_b0_best.pt
+  results_dir: results/efficientnet_b0
+
+evaluation:
+  bootstrap_resamples: 1000
+  ece_bins: 10
+
+gradcam_grid:
+  per_category: 4

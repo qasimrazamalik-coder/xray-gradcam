@@ -1,0 +1,46 @@
+# Real run: ResNet-50 on the Kaggle chest X-ray data. Run `make data` first.
+seed: 42
+
+data:
+  source: kaggle              # kaggle | synthetic
+  root: data/chest_xray       # folder that contains train/ and test/
+  image_size: 224
+  val_fraction: 0.15          # carved out of the official train/ folder, stratified
+  batch_size: 32
+  num_workers: 2
+  # synthetic-only settings (ignored for source: kaggle)
+  synthetic:
+    root: data/synthetic_xray
+    train_per_class: {NORMAL: 40, PNEUMONIA: 80}
+    test_per_class: {NORMAL: 20, PNEUMONIA: 40}
+
+model:
+  arch: resnet50              # resnet50 | efficientnet_b0
+  pretrained: true            # ImageNet weights from torchvision
+  dropout: 0.3
+  gradcam_layer: layer4       # last conv stage; for efficientnet_b0 use features.8
+
+train:
+  imbalance: pos_weight       # pos_weight | sampler | none
+  weight_decay: 0.0001
+  stage1:                     # head only, backbone frozen
+    epochs: 4
+    lr: 0.001
+    patience: 3
+  stage2:                     # whole network, lower learning rates
+    epochs: 12
+    lr_backbone: 0.0001
+    lr_head: 0.0003
+    patience: 4
+  min_delta: 0.0001           # minimum val AUROC gain that counts as improvement
+
+paths:
+  checkpoint: checkpoints/resnet50_best.pt
+  results_dir: results/resnet50
+
+evaluation:
+  bootstrap_resamples: 1000
+  ece_bins: 10
+
+gradcam_grid:
+  per_category: 4

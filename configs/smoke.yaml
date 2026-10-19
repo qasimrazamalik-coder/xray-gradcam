@@ -1,0 +1,39 @@
+# Smoke test on SYNTHETIC images with random-init weights. Proves the pipeline runs end to end.
+# Any number it produces is meaningless as a result.
+seed: 42
+
+data:
+  source: synthetic
+  root: data/chest_xray
+  image_size: 96
+  val_fraction: 0.2
+  batch_size: 16
+  num_workers: 0
+  synthetic:
+    root: data/synthetic_xray
+    train_per_class: {NORMAL: 30, PNEUMONIA: 60}
+    test_per_class: {NORMAL: 15, PNEUMONIA: 30}
+
+model:
+  arch: resnet50
+  pretrained: false
+  dropout: 0.3
+  gradcam_layer: layer4
+
+train:
+  imbalance: pos_weight
+  weight_decay: 0.0001
+  stage1: {epochs: 2, lr: 0.001, patience: 2}
+  stage2: {epochs: 2, lr_backbone: 0.0001, lr_head: 0.0003, patience: 2}
+  min_delta: 0.0001
+
+paths:
+  checkpoint: checkpoints/smoke_resnet50.pt
+  results_dir: results/smoke
+
+evaluation:
+  bootstrap_resamples: 100
+  ece_bins: 5
+
+gradcam_grid:
+  per_category: 2

@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xray-gradcam"
+version = "0.1.0"
+description = "Chest X-ray pneumonia classifier (ResNet-50 / EfficientNet-B0) with from-scratch Grad-CAM and a calibration-aware evaluation."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Qasim Raza Malik" }]
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.1",
+  "scikit-learn>=1.4",
+  "pyyaml>=6.0",
+  "tqdm>=4.66",
+  "gradio>=6.0",
+  "matplotlib>=3.8",
+  "pillow>=10.0",
+  "torch>=2.2",
+  "torchvision>=0.17",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+data = ["kaggle>=1.6"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests", "app"]
+extend-exclude = ["data", "checkpoints"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["app"]
+filterwarnings = ["ignore::DeprecationWarning"]
